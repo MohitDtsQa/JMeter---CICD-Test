@@ -4,30 +4,65 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  pages: write
+  id-token: write
+  contents: read
+
 jobs:
-  jmeter-test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
+      # Install Java
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      # 🔥 CACHE JMETER INSTALLATION
+      - name: Cache JMeter
+        id: cache-jmeter
+        uses: actions/cache@v4
+        with:
+          path: apache-jmeter-5.6.3
+          key: ${{ runner.os }}-jmeter-5.6.3
+
+      # Install only if cache miss
       - name: Install JMeter
+        if: steps.cache-jmeter.outputs.cache-hit != 'true'
         run: |
           wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.3.tgz
           tar -xzf apache-jmeter-5.6.3.tgz
 
-      - name: Run JMeter Test
+      # Run JMeter test
+      - name: Run JMeter
         run: |
-          apache-jmeter-5.6.3/bin/jmeter -n -t test-plan.jmx -l results.jtl -e -o report
+          apache-jmeter-5.6.3/bin/jmeter \
+          -n \
+          -t test-plan.jmx \
+          -l results.jtl \
+          -e \
+          -o report
 
-      - name: Upload Report
-        uses: actions/upload-artifact@v4
+      # Upload report for GitHub Pages
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: jmeter-report
           path: report
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
