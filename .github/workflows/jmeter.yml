@@ -24,10 +24,19 @@ jobs:
 
       - name: Run JMeter Test
         run: |
-          apache-jmeter-5.6.3/bin/jmeter -n -t test-plan.jmx -l results.jtl -e -o report
+          apache-jmeter-5.6.3/bin/jmeter \
+          -n \
+          -t ./test-plan.jmx \
+          -l results.jtl \
+          -e \
+          -o report
 
-      - name: Upload Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: jmeter-report
-          path: report
+      # - name: Run JMeter Test
+      #   run: |
+      #     apache-jmeter-5.6.3/bin/jmeter -n -t test-plan.jmx -l results.jtl -e -o report
+
+      # - name: Upload Report
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: jmeter-report
+      #     path: report
